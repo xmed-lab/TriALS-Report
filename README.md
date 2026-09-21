@@ -43,7 +43,7 @@ study aims to catalyze future research into safer, resource-efficient, and globa
 abdominal imaging workflows.
 
 <p align="center">
-  <img src="figures/overview.jpg" width="900" alt="Study workflow: multi-center NCCT collection, label extraction from triphasic reports, model development and evaluation"/>
+  <img src="figures/overview.png" width="900" alt="Study workflow: multi-center NCCT collection, label extraction from triphasic reports, model development and evaluation"/>
 </p>
 
 *Study workflow. Non-contrast CT volumes are paired with the triphasic contrast-enhanced report of the same patient;
