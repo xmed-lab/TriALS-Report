@@ -50,6 +50,17 @@ abdominal imaging workflows.
 findings are extracted from the report to form the label space, and models are evaluated on disease diagnosis and
 report generation.*
 
+
+## Update
+🔥 **Zero-shot [DAMO RADAR](https://github.com/alibaba-damo-academy/damo-radar) outperforms linear probes on Pillar-0 and Merlin for carcinoma and liver metastasis detection on TriALS-Report, without any training on this data.**
+
+| Model | Hepatocellular carcinoma | Pancreatic tumor | Colonic carcinoma | Hepatic metastases | Metastatic disease|
+|---|---|---|---|---|---|
+| Pillar-0 | 83.23 <sub>[76.1, 89.3]</sub> | 82.46 <sub>[69.7, 92.8]</sub> | 56.51 <sub>[41.4, 70.9]</sub> | 75.62 <sub>[68.4, 82.5]</sub> | 71.06 <sub>[64.9, 76.4]</sub> |
+| Merlin | 81.74 <sub>[73.1, 88.9]</sub> | 66.10 <sub>[49.1, 83.4]</sub> | 49.26 <sub>[34.0, 63.4]</sub> | 69.72 <sub>[61.2, 77.3]</sub> | **71.63** <sub>[65.1, 77.8]</sub> |
+| DAMO RADAR (zero-shot) | **92.42** <sub>[88.3, 95.7]</sub> | **91.26** <sub>[78.2, 98.8]</sub> | **67.61** <sub>[54.8, 80.5]</sub> | **87.12** <sub>[82.3, 91.1]</sub> | 68.56 <sub>[62.5, 74.2]</sub> |
+
+
 ## Installation
 
 ```sh
