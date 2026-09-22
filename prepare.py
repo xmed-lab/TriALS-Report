@@ -6,6 +6,7 @@
   python prepare.py rate-inputs --data ./TriALS-Report --work ./work
   rate-extract ...              (one run per model and list, see README)
   python prepare.py features    --data ./TriALS-Report --work ./work --model pillar0
+  python prepare.py radar-inputs --data ./TriALS-Report --work ./work   (test CTs named for DAMO RADAR)
 
 Lists are <center>_<split>: center1_train, center1_val, center1_test, center2_test.
 """
@@ -107,11 +108,28 @@ def cmd_features(args):
         print(f"{args.model} {key}: {len(ids)} embeddings -> {out}/{key}.parquet{note}")
 
 
+def cmd_radar_inputs(args):
+    out = os.path.join(args.work, "radar_inputs")
+    os.makedirs(out, exist_ok=True)
+    n = 0
+    for name, rows in cohort(args.data).items():
+        if not name.endswith("_test"):
+            continue
+        tag = name.split("_")[0].replace("center", "Center")
+        for pid, _, path in rows:
+            link = os.path.join(out, f"{tag}__{pid}.nii.gz")
+            if not os.path.exists(link):
+                os.symlink(path, link)
+            n += 1
+    print(f"{n} test volumes linked in {out}")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
-    for name, fn in (("series", cmd_series), ("rate-inputs", cmd_rate_inputs), ("features", cmd_features)):
+    for name, fn in (("series", cmd_series), ("rate-inputs", cmd_rate_inputs), ("features", cmd_features),
+                     ("radar-inputs", cmd_radar_inputs)):
         p = sub.add_parser(name)
         p.add_argument("--data", required=True, help="the downloaded TriALS-Report folder")
         p.add_argument("--work", required=True, help="working folder for intermediate files")

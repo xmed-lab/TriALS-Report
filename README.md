@@ -51,25 +51,50 @@ findings are extracted from the report to form the label space, and models are e
 report generation.*
 
 
-## Update
+
+## Results
+
+#### Carcinomas and metastases (internal and external test pooled, n=388)
+
 🔥 **Zero-shot [DAMO RADAR](https://github.com/alibaba-damo-academy/damo-radar) outperforms linear probes on Pillar-0 and Merlin for carcinoma and liver metastasis detection on TriALS-Report, without any training on this data.**
 
-| Model | Hepatocellular carcinoma | Pancreatic tumor | Colonic carcinoma | Hepatic metastases | Metastatic disease|
-|---|---|---|---|---|---|
-| Pillar-0 | 83.23 <sub>[76.1, 89.3]</sub> | 82.46 <sub>[69.7, 92.8]</sub> | 56.51 <sub>[41.4, 70.9]</sub> | 75.62 <sub>[68.4, 82.5]</sub> | 71.06 <sub>[64.9, 76.4]</sub> |
-| Merlin | 81.74 <sub>[73.1, 88.9]</sub> | 66.10 <sub>[49.1, 83.4]</sub> | 49.26 <sub>[34.0, 63.4]</sub> | 69.72 <sub>[61.2, 77.3]</sub> | **71.63** <sub>[65.1, 77.8]</sub> |
+| Model | Hepatocellular carcinoma | Pancreatic tumor | Colonic carcinoma| Hepatic metastases                |  Metastatic disease (n=92) |
+|---|---|---|---|-----------------------------------|---|
+| Pillar-0 | 83.23 <sub>[76.1, 89.3]</sub> | 82.46 <sub>[69.7, 92.8]</sub> | 56.51 <sub>[41.4, 70.9]</sub> | 75.62 <sub>[68.4, 82.5]</sub>     | 71.06 <sub>[64.9, 76.4]</sub> |
+| Merlin | 81.74 <sub>[73.1, 88.9]</sub> | 66.10 <sub>[49.1, 83.4]</sub> | 49.26 <sub>[34.0, 63.4]</sub> | 69.72 <sub>[61.2, 77.3]</sub>     | **71.63** <sub>[65.1, 77.8]</sub> |
 | DAMO RADAR (zero-shot) | **92.42** <sub>[88.3, 95.7]</sub> | **91.26** <sub>[78.2, 98.8]</sub> | **67.61** <sub>[54.8, 80.5]</sub> | **87.12** <sub>[82.3, 91.1]</sub> | 68.56 <sub>[62.5, 74.2]</sub> |
 
+#### Organ-level results (paper)
 
-## Installation
+Non-contrast CT, frozen encoder + linear probe. AUC in %, 95% bootstrap CI in brackets.
 
-```sh
-git clone https://github.com/xmed-lab/TriALS-Report
-cd TriALS-Report
-conda create -n trials-report python=3.11 -y
-conda activate trials-report
-pip install -r requirements.txt
-```
+#### Internal test (Center 1, n=219)
+
+| Model | Liver (10 diseases) | Pancreas (3 diseases) | Average (15 organs, 51 diseases) |
+|---|---|---|---|
+| Pillar-0 | 68.24 <sub>[65.2, 71.5]</sub> | **80.39** <sub>[71.4, 87.9]</sub> | 69.92 <sub>[67.4, 72.2]</sub> |
+| Merlin | **69.48** <sub>[66.5, 72.4]</sub> | 76.00 <sub>[65.1, 85.6]</sub> | **71.05** <sub>[68.8, 73.3]</sub> |
+
+#### External test (Center 2, n=169)
+
+| Model | Liver (10 diseases) | Pancreas (3 diseases) | Average (15 organs, 51 diseases) |
+|---|---|---|---|
+| Pillar-0 | 66.48 <sub>[62.4, 70.8]</sub> | **78.55** <sub>[64.8, 92.1]</sub> | 65.71 <sub>[63.2, 68.4]</sub> |
+| Merlin | **68.15** <sub>[64.3, 72.1]</sub> | 61.32 <sub>[52.5, 70.1]</sub> | **66.24** <sub>[63.7, 68.8]</sub> |
+
+Liver: cirrhosis, congenital liver cysts, hepatic changes post-resection, hepatic cysts, hepatic hemangiomas,
+hepatic masses, hepatic metastases, hepatic steatosis, hepatocellular carcinoma, hepatomegaly.
+Pancreas: main pancreatic duct dilatation, pancreatic atrophy, pancreatic tumors.
+
+The taxonomy has 53 diseases over 16 organs; the average covers the 15 organs excluding Multi-organ (metastatic
+disease, inguinal hernias), so 51 diseases. Chance level is 50.00 AUC. F1 and all 16 organs are written to
+`results/summary_organs.csv` and `results/<model>/<split>/seed<k>/`.
+
+The encoders, [Pillar-0](https://huggingface.co/YalaLab/Pillar0-AbdomenCT) and
+[Merlin](https://huggingface.co/stanfordmimi/Merlin), are frozen and only the probe is trained, so no checkpoints are
+released.
+
+
 
 ## Dataset
 
@@ -99,6 +124,16 @@ TriALS-Report/
 ```
 
 See the [dataset card](https://huggingface.co/datasets/marwankefah/TriALS-Report) for the label and split conventions.
+
+## Installation
+
+```sh
+git clone https://github.com/xmed-lab/TriALS-Report
+cd TriALS-Report
+conda create -n trials-report python=3.11 -y
+conda activate trials-report
+pip install -r requirements.txt
+```
 
 ## Disease diagnosis
 
@@ -162,41 +197,41 @@ average the per-disease scores within each organ, over 1,000 patient-level boots
 trained a fixed 1000 epochs without validation and were unseeded; this code seeds the probe and selects the epoch on
 val, so values can differ slightly.
 
-## Results
+### 3. Zero-shot DAMO RADAR
 
-Non-contrast CT, frozen encoder + linear probe. AUC in %, 95% bootstrap CI in brackets.
+Set up [DAMO RADAR](https://github.com/alibaba-damo-academy/damo-radar) and download its checkpoints:
 
-#### Internal test (Center 1, n=219)
+```sh
+git clone https://github.com/alibaba-damo-academy/damo-radar
+cd damo-radar
+conda create -n radar python=3.10 -y && conda activate radar
+pip install -r requirements.txt
+git apply ../patches/radar_inference_memory.patch   # lower GPU memory on full-size scans, same outputs
+cd download_scripts && python download_checkpoints.py && cd ../..
+```
 
-| Model | Liver (10 diseases) | Pancreas (3 diseases) | Average (15 organs, 51 diseases) |
-|---|---|---|---|
-| Pillar-0 | 68.24 <sub>[65.2, 71.5]</sub> | **80.39** <sub>[71.4, 87.9]</sub> | 69.92 <sub>[67.4, 72.2]</sub> |
-| Merlin | **69.48** <sub>[66.5, 72.4]</sub> | 76.00 <sub>[65.1, 85.6]</sub> | **71.05** <sub>[68.8, 73.3]</sub> |
+Run it on the 388 test volumes (a GPU is required), then score the output:
 
-#### External test (Center 2, n=169)
+```sh
+python prepare.py radar-inputs --data ./TriALS-Report --work ./work
 
-| Model | Liver (10 diseases) | Pancreas (3 diseases) | Average (15 organs, 51 diseases) |
-|---|---|---|---|
-| Pillar-0 | 66.48 <sub>[62.4, 70.8]</sub> | **78.55** <sub>[64.8, 92.1]</sub> | 65.71 <sub>[63.2, 68.4]</sub> |
-| Merlin | **68.15** <sub>[64.3, 72.1]</sub> | 61.32 <sub>[52.5, 70.1]</sub> | **66.24** <sub>[63.7, 68.8]</sub> |
+cd damo-radar/RADAR_inference
+python inference_demo.py --img_dir ../../work/radar_inputs --save_dir ../results --save_tag trials_report_test
+cd ../..
 
-Liver: cirrhosis, congenital liver cysts, hepatic changes post-resection, hepatic cysts, hepatic hemangiomas,
-hepatic masses, hepatic metastases, hepatic steatosis, hepatocellular carcinoma, hepatomegaly.
-Pancreas: main pancreatic duct dilatation, pancreatic atrophy, pancreatic tumors.
+python score_radar.py --data ./TriALS-Report \
+    --radar damo-radar/results/RADAR_infer_results_trials_report_test.csv
+```
 
-The taxonomy has 53 diseases over 16 organs; the average covers the 15 organs excluding Multi-organ (metastatic
-disease, inguinal hernias), so 51 diseases. Chance level is 50.00 AUC. F1 and all 16 organs are written to
-`results/summary_organs.csv` and `results/<model>/<split>/seed<k>/`.
-
-The encoders, [Pillar-0](https://huggingface.co/YalaLab/Pillar0-AbdomenCT) and
-[Merlin](https://huggingface.co/stanfordmimi/Merlin), are frozen and only the probe is trained, so no checkpoints are
-released.
+`radar-inputs` links the test volumes as `Center1__<id>.nii.gz` and `Center2__<id>.nii.gz`, the names RADAR writes
+to its output, and `score_radar.py` prints the table above.
 
 ## Acknowledgment
 
 Built on [RATE-Evals](https://github.com/marwankefah/rate-evals) and
 [rad-vision-engine](https://github.com/yalalab/rave). The evaluated encoders are
-[Pillar-0](https://huggingface.co/YalaLab/Pillar0-AbdomenCT) and [Merlin](https://huggingface.co/stanfordmimi/Merlin).
+[Pillar-0](https://huggingface.co/YalaLab/Pillar0-AbdomenCT) and [Merlin](https://huggingface.co/stanfordmimi/Merlin), and the zero-shot comparison uses
+[DAMO RADAR](https://github.com/alibaba-damo-academy/damo-radar).
 
 ## License
 

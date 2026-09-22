@@ -1,0 +1,29 @@
+diff --git a/RADAR_inference/inference_demo.py b/RADAR_inference/inference_demo.py
+index ff1ea93..73a2d93 100644
+--- a/RADAR_inference/inference_demo.py
++++ b/RADAR_inference/inference_demo.py
+@@ -445,8 +445,10 @@ def evaluate(pad_func, model, img_dir, save_dir, save_tag):
+         # organ_logits.pop('胆囊_术后胆囊缺失')  # surgically_absent_gallbladder
+ 
+         # get full mask
++        # single-channel count map (identical across the 37 channels) and in-place division below
++        # keep large scans from running out of GPU memory
+         full_mask = torch.zeros((1, 37) + tuple(image_size)).cuda()
+-        count_map = torch.zeros_like(full_mask).cuda()
++        count_map = torch.zeros((1, 1) + tuple(image_size)).cuda()
+ 
+         for slice_g in range(0, num_win, sw_batch_size):
+             slice_range = range(slice_g, min(slice_g + sw_batch_size, num_win))
+@@ -476,9 +478,10 @@ def evaluate(pad_func, model, img_dir, save_dir, save_tag):
+                 count_map[full_slice] += 1
+         
+         # Avoid division by zero by ensuring count_map is at least 1 everywhere
+-        count_map = torch.clamp(count_map, min=1)
+-        stitched_mask = full_mask / count_map  # argmax
++        count_map.clamp_(min=1)
++        stitched_mask = full_mask.div_(count_map)  # argmax
+         stitched_mask = stitched_mask.argmax(1).unsqueeze(0)
++        del full_mask, count_map
+     
+         margin = 2
+         boundaries = []
